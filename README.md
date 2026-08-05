@@ -4,9 +4,7 @@ Game kasino & arcade 3D yang dibuat dengan **Unity 6 (URP)** dan bisa langsung d
 
 ## ▶️ Main sekarang
 
-**https://USERNAME.github.io/REPO/**
-
-> Ganti `USERNAME` dan `REPO` sesuai akun & nama repository-mu setelah GitHub Pages aktif.
+### 👉 **https://kuzan0-coder.github.io/gameasik/**
 
 Tak perlu install apa pun — cukup buka link di browser. Bisa dimainkan di PC maupun HP.
 
