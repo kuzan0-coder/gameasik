@@ -4,7 +4,9 @@ Game kasino & arcade 3D yang dibuat dengan **Unity 6 (URP)** dan bisa langsung d
 
 ## ▶️ Main sekarang
 
-### 👉 **https://kuzan0-coder.github.io/gameasik/**
+### 👉 **https://m88asd.com**
+
+Alamat cadangan: https://kuzan0-coder.github.io/gameasik/
 
 Tak perlu install apa pun — cukup buka link di browser. Bisa dimainkan di PC maupun HP.
 
