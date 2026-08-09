@@ -1,133 +1,168 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Grand Casino Royale</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Grand Casino Royale</div>
-      </div>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Grand Casino Royale</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#0a0618;
+                 font-family:'Segoe UI', Roboto, system-ui, sans-serif; }
+
+    #wrap { position:fixed; inset:0; }
+    #unity-canvas { width:100%; height:100%; display:block; background:#0a0618; }
+
+    /* ---------- layar memuat ---------- */
+    #load {
+      position:fixed; inset:0; z-index:10;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:radial-gradient(ellipse at 50% 45%, #2a1250 0%, #140a2e 45%, #07040f 100%);
+      transition:opacity .6s ease; padding:24px;
+    }
+    #load.gone { opacity:0; pointer-events:none; }
+
+    /* garis grid sintetik di bawah, senada dengan menu game */
+    #load::after{
+      content:''; position:absolute; left:0; right:0; bottom:0; height:42%;
+      background:
+        repeating-linear-gradient(to right, rgba(0,229,255,.16) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(to bottom, rgba(0,229,255,.16) 0 1px, transparent 1px 42px);
+      transform:perspective(340px) rotateX(62deg); transform-origin:bottom; opacity:.55;
+    }
+
+    #title {
+      position:relative; z-index:2; text-align:center;
+      font-size:clamp(24px, 6vw, 54px); font-weight:800; letter-spacing:.08em;
+      color:#fff; text-shadow:0 0 12px #ff2fb9, 0 0 36px #ff2fb9, 0 0 70px rgba(255,47,185,.5);
+      margin-bottom:6px;
+    }
+    #sub { position:relative; z-index:2; color:#7de3ff; letter-spacing:.32em;
+           font-size:clamp(9px, 2vw, 13px); margin-bottom:38px; text-transform:uppercase; }
+
+    #barbox { position:relative; z-index:2; width:min(460px, 82vw); }
+    #bar { height:12px; border-radius:99px; background:rgba(255,255,255,.09);
+           border:1px solid rgba(125,227,255,.35); overflow:hidden; }
+    #fill { height:100%; width:0%; border-radius:99px;
+            background:linear-gradient(90deg,#00e5ff,#8b5cf6,#ff2fb9);
+            box-shadow:0 0 18px rgba(0,229,255,.75); transition:width .25s ease; }
+
+    #row { display:flex; justify-content:space-between; align-items:baseline; margin-top:12px; }
+    #pct { color:#fff; font-size:26px; font-weight:700; }
+    #stage { color:#9aa6c9; font-size:13px; }
+
+    #tip { position:relative; z-index:2; margin-top:34px; max-width:520px; text-align:center;
+           color:#c3cbe4; font-size:clamp(12px, 2.2vw, 14px); line-height:1.65; min-height:44px; }
+    #tip b { color:#7de3ff; }
+
+    #note { position:relative; z-index:2; margin-top:26px; color:#6b7593;
+            font-size:12px; text-align:center; }
+
+    /* ---------- tombol layar penuh ---------- */
+    #fs { position:fixed; right:14px; bottom:14px; z-index:5; display:none;
+          padding:9px 15px; border-radius:8px; cursor:pointer; color:#dfe6ff;
+          background:rgba(10,6,24,.72); border:1px solid rgba(125,227,255,.4);
+          font-size:13px; backdrop-filter:blur(6px); }
+    #fs:hover { background:rgba(30,18,60,.9); }
+
+    #err { position:fixed; inset:auto 0 0 0; z-index:20; display:none;
+           background:#7f1d1d; color:#fff; padding:12px 16px; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+  </div>
+
+  <div id="load">
+    <div id="title">Grand Casino Royale</div>
+    <div id="sub">memuat permainan</div>
+
+    <div id="barbox">
+      <div id="bar"><div id="fill"></div></div>
+      <div id="row"><span id="pct">0%</span><span id="stage">menyiapkan…</span></div>
     </div>
-    <script>
-      var canvas = document.querySelector("#unity-canvas");
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
+    <div id="tip"></div>
+    <div id="note">Pemuatan pertama memerlukan waktu lebih lama.<br>Kunjungan berikutnya jauh lebih cepat.</div>
+  </div>
 
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/Web.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/Web.data.unityweb",
-        frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
-        codeUrl: buildUrl + "/Web.wasm.unityweb",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "SutriSanti",
-        productName: "Grand Casino Royale",
-        productVersion: "0.1",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
-      };
+  <div id="fs">Layar penuh</div>
+  <div id="err"></div>
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+    var load   = document.querySelector("#load");
+    var fill   = document.querySelector("#fill");
+    var pct    = document.querySelector("#pct");
+    var stage  = document.querySelector("#stage");
+    var tipEl  = document.querySelector("#tip");
 
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
+    /* ---- tips berganti supaya menunggu tidak membosankan ---- */
+    var tips = [
+      "Gunakan <b>W A S D</b> untuk berjalan, tahan <b>Shift</b> untuk berlari.",
+      "Tekan <b>Spasi</b> dua kali di udara untuk melakukan <b>salto</b>.",
+      "Dekati kabinet arcade lalu tekan <b>E</b> untuk bermain.",
+      "Tekan <b>Tab</b> kapan saja untuk membuka pengaturan.",
+      "Tekan <b>M</b> untuk menampilkan peta mini.",
+      "Kamu bisa mengganti karakter dan pakaiannya sebelum masuk.",
+      "Main dari HP? Kontrol sentuh muncul dengan sendirinya."
+    ];
+    var ti = Math.floor(Math.random() * tips.length);
+    function nextTip(){ tipEl.innerHTML = tips[ti % tips.length]; ti++; }
+    nextTip(); setInterval(nextTip, 4200);
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
+    function showErr(msg){
+      var e = document.querySelector("#err");
+      e.style.display = "block";
+      e.textContent = msg;
+    }
 
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
+    var buildUrl = "Build";
+    var config = {
+      arguments: [],
+      dataUrl:      buildUrl + "/Web.data.unityweb",
+      frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
+      codeUrl:      buildUrl + "/Web.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName:    "SutriSanti",
+      productName:    "Grand Casino Royale",
+      productVersion: "0.1",
+      showBanner: function(msg, type){ if (type === 'error') showErr(msg); }
+    };
 
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      document.querySelector("meta[name=viewport]").content =
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no";
+    }
 
+    var script = document.createElement("script");
+    script.src = buildUrl + "/Web.loader.js";
 
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
-      }
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (p) {
+        var v = Math.round(p * 100);
+        fill.style.width = v + "%";
+        pct.textContent  = v + "%";
+        // keterangan tahap, supaya jelas bukan macet
+        if (v < 92)       stage.textContent = "mengunduh berkas…";
+        else if (v < 100) stage.textContent = "menyiapkan permainan…";
+        else              stage.textContent = "hampir siap…";
+      }).then(function (unityInstance) {
+        load.classList.add("gone");
+        setTimeout(function(){ load.style.display = "none"; }, 700);
+        var fs = document.querySelector("#fs");
+        fs.style.display = "block";
+        fs.onclick = function(){ unityInstance.SetFullscreen(1); };
+      }).catch(function (message) {
+        showErr("Gagal memuat: " + message);
+      });
+    };
 
-      document.querySelector("#unity-loading-bar").style.display = "block";
+    script.onerror = function () {
+      showErr("Berkas permainan tidak dapat diunduh. Periksa koneksi internet lalu muat ulang halaman.");
+    };
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
-    </script>
-  </body>
+    document.body.appendChild(script);
+  </script>
+</body>
 </html>
