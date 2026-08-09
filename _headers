@@ -1,0 +1,46 @@
+# ============================================================
+#  _headers  -->  Konfigurasi penyajian berkas untuk Cloudflare Pages
+# ============================================================
+# Dibaca otomatis oleh Cloudflare Pages (dan Netlify). Diabaikan oleh
+# GitHub Pages, jadi aman disimpan di repo yang sama.
+#
+# Dua tujuan:
+#
+# 1) Content-Encoding: br
+#    Berkas build Unity SUDAH dikompresi Brotli. Tanpa header ini, browser
+#    tidak tahu dan terpaksa mendekompresnya sendiri lewat JavaScript
+#    (lambat, satu inti). Dengan header ini, dekompresi dilakukan browser
+#    secara native -> jauh lebih cepat.
+#
+# 2) Cache-Control setahun
+#    Bawaan GitHub Pages hanya 10 menit, sehingga pengunjung yang kembali
+#    mengunduh ulang 43 MB. Berkas build tidak pernah berubah tanpa build
+#    baru, jadi aman disimpan lama.
+#
+# Content-Type ditulis eksplisit karena penting: berkas .wasm harus
+# application/wasm agar browser bisa mengompilasinya sambil mengunduh.
+
+/Build/Web.data.unityweb
+  Content-Encoding: br
+  Content-Type: application/octet-stream
+  Cache-Control: public, max-age=31536000, immutable
+
+/Build/Web.wasm.unityweb
+  Content-Encoding: br
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/Build/Web.framework.js.unityweb
+  Content-Encoding: br
+  Content-Type: application/javascript
+  Cache-Control: public, max-age=31536000, immutable
+
+/Build/Web.loader.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/TemplateData/*
+  Cache-Control: public, max-age=604800
+
+# Halaman utama jangan di-cache lama, supaya pembaruan langsung terlihat
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
