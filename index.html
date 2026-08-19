@@ -111,6 +111,15 @@
     function nextTip(){ tipEl.innerHTML = tips[ti % tips.length]; ti++; }
     nextTip(); setInterval(nextTip, 4200);
 
+    // Ekstensi browser (dompet kripto, pemblokir iklan, alat otomasi, dll) menyuntikkan
+    // skripnya sendiri ke setiap halaman. Kalau skrip itu error, Unity ikut menolak promise-nya
+    // dan seolah-olah PERMAINAN yang gagal. Dikenali dari jejak "chrome-extension://".
+    function dariEkstensi(x){
+      var t = "";
+      try { t = (x && x.stack) ? String(x.stack) : String(x); } catch (e) { t = ""; }
+      return /(chrome|moz|safari-web|ms-browser)-extension:\/\//.test(t);
+    }
+
     function showErr(msg){
       var e = document.querySelector("#err");
       e.style.display = "block";
@@ -127,7 +136,11 @@
       companyName:    "SutriSanti",
       productName:    "Grand Casino Royale",
       productVersion: "0.1",
-      showBanner: function(msg, type){ if (type === 'error') showErr(msg); }
+      showBanner: function(msg, type){
+        if (type !== 'error') return;
+        if (dariEkstensi(msg)) return;   // error dari ekstensi browser, bukan dari permainan
+        showErr(msg);
+      }
     };
 
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -154,7 +167,13 @@
         fs.style.display = "block";
         fs.onclick = function(){ unityInstance.SetFullscreen(1); };
       }).catch(function (message) {
-        showErr("Gagal memuat: " + message);
+        if (dariEkstensi(message)) {
+          showErr("Permainan tidak bisa dijalankan karena ada EKSTENSI BROWSER di profil ini yang "
+                + "menghalanginya. Coba buka lewat jendela Penyamaran (Incognito), atau matikan "
+                + "ekstensi untuk halaman ini lalu muat ulang. Bukan masalah koneksi atau server.");
+        } else {
+          showErr("Gagal memuat: " + message);
+        }
       });
     };
 
