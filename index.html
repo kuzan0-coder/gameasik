@@ -127,11 +127,12 @@
     }
 
     var buildUrl = "Build";
+    var vCache = "?v=20260822a";   // ganti kalau build baru, biar cache browser tidak nyangkut
     var config = {
       arguments: [],
-      dataUrl:      buildUrl + "/Web.data.unityweb",
-      frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
-      codeUrl:      buildUrl + "/Web.wasm.unityweb",
+      dataUrl:      buildUrl + "/Web.data.unityweb" + vCache,
+      frameworkUrl: buildUrl + "/Web.framework.js.unityweb" + vCache,
+      codeUrl:      buildUrl + "/Web.wasm.unityweb" + vCache,
       streamingAssetsUrl: "StreamingAssets",
       companyName:    "SutriSanti",
       productName:    "Grand Casino Royale",
@@ -149,7 +150,7 @@
     }
 
     var script = document.createElement("script");
-    script.src = buildUrl + "/Web.loader.js";
+    script.src = buildUrl + "/Web.loader.js" + vCache;
 
     script.onload = function () {
       createUnityInstance(canvas, config, function (p) {
